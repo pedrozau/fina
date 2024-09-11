@@ -33,6 +33,7 @@ const Login = () => {
         console.log(data);
       localStorage.setItem('token', data.session.access_token);
       localStorage.setItem('userId', data.user.id);
+      localStorage.setItem('supabaseSession', data.session);
       setSuccess('Login bem-sucedido!');
       navigate('/');
     }
