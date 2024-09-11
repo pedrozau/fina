@@ -16,6 +16,8 @@ const Dashboard = () => {
   };
 
 
+  setSavings(0)
+
 
   useEffect(() => {
     const fetchData = async () => {
