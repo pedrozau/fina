@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     setUser(null);
+    localStorage.removeItem('supabaseSession');
     navigate('/login');
   };
 
