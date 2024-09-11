@@ -7,7 +7,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const ExpenseChart = ({ expenseData }) => {
   // Extrair categorias e valores dos dados de despesa
-  const categories = expenseData.map(item => item.nome); // Usando o nome da despesa como categoria
+  const categories = expenseData.map(item => item.categoria); // Usando o nome da despesa como categoria
   const values = expenseData.map(item => item.valor); // Usando o valor da despesa
 
   // Dados para o gráfico (baseado nas categorias e valores das despesas)

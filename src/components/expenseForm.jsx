@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-import { supabase } from '../supabase/supabase'; // Importar o cliente Supabase
+import { useState, useEffect } from 'react';
+import { supabase } from '../supabase/supabase';
+import { v4 as uuidv4 } from 'uuid'; // Importe a função uuidv4
 
 const ExpenseForm = () => {
   const [expenseName, setExpenseName] = useState('');
@@ -9,12 +10,29 @@ const ExpenseForm = () => {
   const [category, setCategory] = useState('');
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Erro ao obter sessão:', error.message);
+        return;
+      }
+      if (session?.user) {
+        setUserId(session.user.id);
+      }
+    };
+    fetchUserId();
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
     if (!expenseName) newErrors.expenseName = 'Nome da despesa é obrigatório';
     if (!amount || parseFloat(amount) <= 0) newErrors.amount = 'Valor deve ser maior que 0';
     if (!date) newErrors.date = 'Data é obrigatória';
+    else if (new Date(date) > new Date()) newErrors.date = 'Data não pode ser futura';
     if (!category) newErrors.category = 'Categoria é obrigatória';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -22,72 +40,81 @@ const ExpenseForm = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsLoading(true);
+    setErrors({});
+    setSuccessMessage('');
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      console.error('Usuário não autenticado');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      setErrors({ form: 'Usuário não autenticado. Por favor, faça login novamente.' });
+      setIsLoading(false);
       return;
     }
 
     if (validateForm()) {
       try {
-        // Buscar o saldo atual da tabela saldo_total
+        // Buscar o saldo atual
         const { data: saldoData, error: saldoError } = await supabase
           .from('saldo_total')
           .select('saldo')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .single();
-
-          console.log(user.id)
 
         if (saldoError) throw saldoError;
 
         const saldoAtual = saldoData.saldo;
+        const despesaValor = parseFloat(amount);
 
-        // Verifica se o saldo é suficiente
-        if (parseFloat(amount) > saldoAtual) {
+        if (despesaValor > saldoAtual) {
           setErrors({ form: 'Saldo insuficiente para essa despesa.' });
           return;
         }
 
-        // Atualizar o saldo total subtraindo o valor da despesa
-        const novoSaldo = saldoAtual - parseFloat(amount);
-        
-        const { error: updateError } = await supabase
-          .from('saldo_total')
-          .update({ saldo: novoSaldo })
-          .eq('user_id', user.id);
+        const novoSaldo = saldoAtual - despesaValor;
 
-        if (updateError) throw updateError;
-
-        // Adicionar a despesa ao Supabase
-        const { data, error: insertError } = await supabase
+        // Inserir a nova despesa
+        const { error: insertError } = await supabase
           .from('despesa')
-          .insert([
-            {
-              nome: expenseName,
-              valor: parseFloat(amount),
-              user_id: user.id,
-              data: date,
-              categoria: category,
-            },
-          ]);
+          .insert({
+            nome: expenseName,
+            valor: despesaValor,
+            user_id: userId,
+            data: date,
+            categoria: category,
+          });
 
         if (insertError) throw insertError;
 
+        // Atualizar o saldo total
+        const { data, error: updateError } = await supabase
+          .from('saldo_total')
+          .update({ saldo: novoSaldo })
+          .match({ user_id: session.user.id });
+
+        if (updateError) {
+          console.error('Erro ao atualizar saldo:', updateError);
+          throw updateError;
+        }
+
         setSuccessMessage('Despesa adicionada com sucesso! Saldo atualizado.');
-        // Resetar o formulário e erros
-        setExpenseName('');
-        setAmount('');
-        setDate('');
-        setCategory('');
-        setErrors({});
+        resetForm();
       } catch (error) {
         console.error('Erro ao adicionar despesa:', error.message);
         setErrors({ form: 'Erro ao adicionar despesa. Tente novamente mais tarde.' });
+      } finally {
+        setIsLoading(false);
       }
+    } else {
+      setIsLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setExpenseName('');
+    setAmount('');
+    setDate('');
+    setCategory('');
+    setErrors({});
   };
 
   return (
@@ -115,6 +142,7 @@ const ExpenseForm = () => {
               placeholder="Digite o nome da despesa"
               className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${errors.expenseName ? 'border-red-500' : ''}`}
               aria-describedby="expenseNameError"
+              aria-invalid={!!errors.expenseName}
             />
             {errors.expenseName && (
               <p id="expenseNameError" className="text-red-500 text-xs italic">{errors.expenseName}</p>
@@ -132,6 +160,7 @@ const ExpenseForm = () => {
               placeholder="Digite o valor"
               className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${errors.amount ? 'border-red-500' : ''}`}
               aria-describedby="amountError"
+              aria-invalid={!!errors.amount}
             />
             {errors.amount && (
               <p id="amountError" className="text-red-500 text-xs italic">{errors.amount}</p>
@@ -148,6 +177,7 @@ const ExpenseForm = () => {
               onChange={(e) => setDate(e.target.value)}
               className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${errors.date ? 'border-red-500' : ''}`}
               aria-describedby="dateError"
+              aria-invalid={!!errors.date}
             />
             {errors.date && (
               <p id="dateError" className="text-red-500 text-xs italic">{errors.date}</p>
@@ -163,6 +193,7 @@ const ExpenseForm = () => {
               onChange={(e) => setCategory(e.target.value)}
               className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${errors.category ? 'border-red-500' : ''}`}
               aria-describedby="categoryError"
+              aria-invalid={!!errors.category}
             >
               <option value="">Selecione uma categoria</option>
               <option value="alimentacao">Alimentação</option>
@@ -177,11 +208,12 @@ const ExpenseForm = () => {
           <div className="flex items-center justify-center">
             <motion.button
               type="submit"
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              className={`bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              disabled={isLoading}
             >
-              Adicionar
+              {isLoading ? 'Adicionando...' : 'Adicionar'}
             </motion.button>
           </div>
           {successMessage && (
