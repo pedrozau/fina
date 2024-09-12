@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase/supabase';
-import { v4 as uuidv4 } from 'uuid'; // Importe a função uuidv4
+import Alert from '../components/alert'; // Importe o componente Alert
 
 const ExpenseForm = () => {
   const [expenseName, setExpenseName] = useState('');
@@ -12,6 +12,8 @@ const ExpenseForm = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState('');
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -41,12 +43,13 @@ const ExpenseForm = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsLoading(true);
-    setErrors({});
-    setSuccessMessage('');
+    setAlertMessage('');
+    setAlertType('');
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
-      setErrors({ form: 'Usuário não autenticado. Por favor, faça login novamente.' });
+      setAlertMessage('Usuário não autenticado. Por favor, faça login novamente.');
+      setAlertType('error');
       setIsLoading(false);
       return;
     }
@@ -66,7 +69,9 @@ const ExpenseForm = () => {
         const despesaValor = parseFloat(amount);
 
         if (despesaValor > saldoAtual) {
-          setErrors({ form: 'Saldo insuficiente para essa despesa.' });
+          setAlertMessage('Saldo insuficiente para essa despesa.');
+          setAlertType('error');
+          setIsLoading(false);
           return;
         }
 
@@ -96,11 +101,13 @@ const ExpenseForm = () => {
           throw updateError;
         }
 
-        setSuccessMessage('Despesa adicionada com sucesso! Saldo atualizado.');
+        setAlertMessage('Despesa adicionada com sucesso! Saldo atualizado.');
+        setAlertType('success');
         resetForm();
       } catch (error) {
         console.error('Erro ao adicionar despesa:', error.message);
-        setErrors({ form: 'Erro ao adicionar despesa. Tente novamente mais tarde.' });
+        setAlertMessage('Erro ao adicionar despesa. Tente novamente mais tarde.');
+        setAlertType('error');
       } finally {
         setIsLoading(false);
       }
@@ -126,6 +133,7 @@ const ExpenseForm = () => {
         transition={{ duration: 0.5 }}
       >
         <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Adicionar Despesa</h2>
+        {alertMessage && <Alert message={alertMessage} type={alertType} />}
         <form onSubmit={handleSubmit}>
           {errors.form && (
             <p className="text-red-500 text-xs italic mb-4">{errors.form}</p>
@@ -196,10 +204,15 @@ const ExpenseForm = () => {
               aria-invalid={!!errors.category}
             >
               <option value="">Selecione uma categoria</option>
-              <option value="alimentacao">Alimentação</option>
-              <option value="transporte">Transporte</option>
-              <option value="lazer">Lazer</option>
-              <option value="saude">Saúde</option>
+              <option value="Alimentação">Alimentação</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Lazer">Lazer</option>
+              <option value="Saúde">Saúde</option>
+              <option value="Namorada">Namorada</option>
+              <option value="Familia">Familia</option>
+              <option value="Equipamente">Equipamente</option>
+              <option value="Outros">Outros</option>
+              
             </select>
             {errors.category && (
               <p id="categoryError" className="text-red-500 text-xs italic">{errors.category}</p>
