@@ -126,7 +126,7 @@ const Dashboard = () => {
                 {expenseCategories.length > 0 ? (
                   expenseCategories.map((category) => (
                     <li key={category.id} className="flex justify-between py-2 border-b border-gray-300">
-                      <span>{category.nome}</span>
+                      <span>{category.categoria}</span>
                       <span>{category.valor ? ` ${category.valor} Kz` : 'Carregando...'}</span>
                     </li>
                   ))
