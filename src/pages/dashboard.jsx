@@ -10,14 +10,11 @@ const Dashboard = () => {
   const [savings, setSavings] = useState(null);
   const [expenseCategories, setExpenseCategories] = useState([]);
   const [saldo, setsaldo] = useState(null);
+  const [monthlyExpenses, setMonthlyExpenses] = useState([]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-
-
-  
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,7 +26,6 @@ const Dashboard = () => {
 
         const userId = user.id;
 
-        
         // Buscar saldo 
         const { data: saldoData, error: saldoError } = await supabase.from('saldo_total').select('*').eq('user_id', userId);
          
@@ -52,9 +48,22 @@ const Dashboard = () => {
         if (error) throw error;
         setTotalExpenses(data.reduce((acc, row) => acc + row.valor, 0));
 
-      
-      
+        // Buscar despesas mensais
+        const { data: monthlyData, error: monthlyError } = await supabase
+          .from('despesa')
+          .select('created_at, valor')
+          .eq('user_id', userId);
 
+        if (monthlyError) throw monthlyError;
+
+        // Processar dados mensais
+        const monthlyTotals = monthlyData.reduce((acc, { created_at, valor }) => {
+          const month = new Date(created_at).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+          acc[month] = (acc[month] || 0) + valor;
+          return acc;
+        }, {});
+
+        setMonthlyExpenses(Object.entries(monthlyTotals).map(([month, total]) => ({ month, total })));
 
       } catch (error) {
         console.error('Erro ao buscar dados:', error.message);
@@ -124,6 +133,19 @@ const Dashboard = () => {
                 ) : (
                   <li className="py-2 text-gray-500">Carregando categorias...</li>
                 )}
+              </ul>
+            </div>
+
+            {/* Novo card para despesas mensais */}
+            <div className="bg-white p-6 rounded-lg shadow-md col-span-1 lg:col-span-3">
+              <h2 className="text-lg font-semibold mb-4">Despesas Mensais</h2>
+              <ul>
+                {monthlyExpenses.map(({ month, total }) => (
+                  <li key={month} className="flex justify-between py-2 border-b border-gray-300">
+                    <span>{month}</span>
+                    <span>R$ {total.toFixed(2)}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
