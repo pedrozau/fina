@@ -1,7 +1,6 @@
 // src/components/Sidebar.js
-import React, { useState, useTransition } from 'react';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
+import React, { useTransition } from 'react';
+import { useLocation, Link } from 'react-router-dom';
 import { supabase } from '../supabase/supabase'; // Importa a configuração do Supabase
 import {
   HomeIcon,
@@ -26,7 +25,7 @@ const menuItems = [
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
+  const location = useLocation();
 
   const handleToggleSidebar = () => {
     startTransition(() => {
@@ -65,13 +64,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         <ul>
           {menuItems.map((item) => (
             <li key={item.href}>
-              <Link href={item.href} passHref>
-                <a className={`flex items-center p-4 hover:bg-blue-600 ${
-                  router.pathname === item.href ? 'bg-blue-800' : ''
-                }`}>
-                  <item.icon className="w-6 h-6" />
-                  <span className="ml-3">{item.label}</span>
-                </a>
+              <Link
+                to={item.href}
+                className={`flex items-center p-4 hover:bg-blue-600 ${
+                  location.pathname === item.href ? 'bg-blue-800' : ''
+                }`}
+              >
+                <item.icon className="w-6 h-6" />
+                <span className="ml-3">{item.label}</span>
               </Link>
             </li>
           ))}
