@@ -55,6 +55,8 @@ function App() {
           }
         />
 
+        <Route path="*" element={<NotFoundPage />} />
+
         {/* Rota de login aberta a todos */}
         <Route path="/login" element={<Login />} />
       </Routes>
