@@ -58,7 +58,7 @@ const Dashboard = () => {
 
         // Processar dados mensais
         const monthlyTotals = monthlyData.reduce((acc, { created_at, valor }) => {
-          const month = new Date(created_at).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+          const month = new Date(created_at).toLocaleString('pt-AO', { month: 'long', year: 'numeric' });
           acc[month] = (acc[month] || 0) + valor;
           return acc;
         }, {});
@@ -94,21 +94,21 @@ const Dashboard = () => {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-lg font-semibold mb-4">Resumo Financeiro</h2>
               <p className="text-2xl font-bold text-green-600">
-                {saldo ? `R$ ${saldo}` : 'Carregando...'}
+                {saldo ? ` ${saldo} Kz` : 'Carregando...'}
               </p>
               <p className="text-sm text-gray-500">Saldo total disponível</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-lg font-semibold mb-4">Despesas Totais</h2>
               <p className="text-2xl font-bold text-red-600">
-                {totalExpenses !== null ? `R$ ${totalExpenses}` : 'Carregando...'}
+                {totalExpenses !== null ? ` ${totalExpenses} Kz` : 'Carregando...'}
               </p>
               <p className="text-sm text-gray-500">Despesas do mês atual</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-lg font-semibold mb-4">Poupança</h2>
               <p className="text-2xl font-bold text-blue-600">
-                {savings !== null ? `R$ ${savings}` : 'Carregando...'}
+                {savings !== null ? `Kz ${savings}` : 'Carregando...'}
               </p>
               <p className="text-sm text-gray-500">Total em poupança</p>
             </div>
@@ -127,7 +127,7 @@ const Dashboard = () => {
                   expenseCategories.map((category) => (
                     <li key={category.id} className="flex justify-between py-2 border-b border-gray-300">
                       <span>{category.nome}</span>
-                      <span>{category.valor ? `R$ ${category.valor}` : 'Carregando...'}</span>
+                      <span>{category.valor ? ` ${category.valor} Kz` : 'Carregando...'}</span>
                     </li>
                   ))
                 ) : (
