@@ -1,5 +1,7 @@
 // src/components/Sidebar.js
 import React, { useState, useTransition } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { supabase } from '../supabase/supabase'; // Importa a configuração do Supabase
 import {
   HomeIcon,
@@ -14,8 +16,17 @@ import {
   UserIcon,
 } from '@heroicons/react/24/outline';
 
+const menuItems = [
+  { href: '/', icon: HomeIcon, label: 'Início' },
+  { href: '/expense', icon: CreditCardIcon, label: 'Despesas' },
+  { href: '/divida', icon: ExclamationTriangleIcon, label: 'Dívidas' },
+  { href: '/poupanca', icon: CurrencyDollarIcon, label: 'Poupança' },
+  { href: '/profile', icon: UserIcon, label: 'Perfil de Usuário' },
+];
+
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleToggleSidebar = () => {
     startTransition(() => {
@@ -52,54 +63,24 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       <nav className="mt-8">
         <ul>
-          <li>
-            <a href="/" className="flex items-center p-4 hover:bg-blue-600">
-              <HomeIcon className="w-6 h-6" />
-              <span className="ml-3">Início</span>
-            </a>
-          </li>
-          <li>
-            <a href="/expense" className="flex items-center p-4 hover:bg-blue-600">
-              <CreditCardIcon className="w-6 h-6" />
-              <span className="ml-3">Despesas</span>
-            </a>
-          </li>
-          {/* <li>
-            <a href="#" className="flex items-center p-4 hover:bg-blue-600">
-              <ChartPieIcon className="w-6 h-6" />
-              <span className="ml-3">Relatórios</span>
-            </a>
-          </li> */}
-          <li>
-            <a href="/divida" className="flex items-center p-4 hover:bg-blue-600">
-              <ExclamationTriangleIcon className="w-6 h-6" />
-              <span className="ml-3">Dívidas</span>
-            </a>
-          </li>
-          <li>
-            <a href="/poupanca" className="flex items-center p-4 hover:bg-blue-600">
-              <CurrencyDollarIcon className="w-6 h-6" />
-              <span className="ml-3">Poupança</span>
-            </a>
-          </li>
-          <li>
-            <a href="/profile" className="flex items-center p-4 hover:bg-blue-600">
-              <UserIcon className="w-6 h-6" />
-              <span className="ml-3">Perfil de Usuário</span>
-            </a>
-          </li>
+          {menuItems.map((item) => (
+            <li key={item.href}>
+              <Link href={item.href} passHref>
+                <a className={`flex items-center p-4 hover:bg-blue-600 ${
+                  router.pathname === item.href ? 'bg-blue-800' : ''
+                }`}>
+                  <item.icon className="w-6 h-6" />
+                  <span className="ml-3">{item.label}</span>
+                </a>
+              </Link>
+            </li>
+          ))}
           <li>
             <a href="#" onClick={handleLogout} className="flex items-center p-4 hover:bg-blue-600">
               <ArrowRightOnRectangleIcon className="w-6 h-6" />
               <span className="ml-3">Logout</span>
             </a>
           </li>
-          {/* <li>
-            <a href="#" className="flex items-center p-4 hover:bg-blue-600">
-              <CogIcon className="w-6 h-6" />
-              <span className="ml-3">Configurações</span>
-            </a>
-          </li> */}
         </ul>
       </nav>
     </div>
