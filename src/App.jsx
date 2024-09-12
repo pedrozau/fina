@@ -8,7 +8,7 @@ import PoupancaPage from './pages/poupanca';
 import ProfilePage from './pages/profile';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute'; // Importe o componente
-
+import NotFoundPage from './pages/NotFound';
 function App() {
   return (
     <AuthProvider>
@@ -57,7 +57,7 @@ function App() {
 
         <Route path="*" element={<NotFoundPage />} />
 
-        {/* Rota de login aberta a todos */}
+
         <Route path="/login" element={<Login />} />
       </Routes>
     </AuthProvider>
